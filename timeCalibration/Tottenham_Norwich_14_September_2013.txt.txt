@@ -1,0 +1,3 @@
+# real_time	video_time	video_path
+0:00	0:00	Tottenham_Norwich_14_September_2013/Tottenham-Norwich.mkv
+45:00	61:31	Tottenham_Norwich_14_September_2013/Tottenham-Norwich.mkv
