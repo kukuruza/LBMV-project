@@ -1,7 +1,7 @@
-filename = 'videoFragments/Liverpool_Man_Utd_1_September_2013-1st-10-sm.mp4';
+filename = '../videoFragments/Liverpool_Man_Utd_1_September_2013-1st-10-sm.mp4';
 
-%obj = VideoReader(filename);
-%video = read(obj);
+obj = VideoReader(filename);
+video = read(obj);
 
 numFrames = size(video, 4);
 numBinsChannel = 100;
