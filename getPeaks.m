@@ -6,7 +6,6 @@ end
 
 diff_hist_minMax=cell(size(window_sizes));
 idx=cell(size(window_sizes));
-strs=cell(size(window_sizes));
 
 for i=1:numel(window_sizes)
     [diff_hist_minMax{i}]=getMinMaxDiff(window_sizes(i),diff_hist);
@@ -19,12 +18,24 @@ idx_mat=sum(idx_mat,1);
 max_all=idx_mat==numel(idx);
 
 max_all_border=max_all-[max_all(2:end) max_all(end)];
-max_all=find(max_all_border);
+max_all_temp=find(max_all_border);
+if mod(numel(max_all_temp),2)~=0
+    if max_all(1)>0
+        max_all_temp=[1 max_all_temp];
+    elseif max_all(end)>0
+        max_all_temp=[max_all_temp numel(max_all)];
+    end
+end
+
+
+
+% keyboard;
+max_all=max_all_temp;
 
 max_val=zeros(1,numel(max_all)/2);
 max_val_idx=zeros(1,numel(max_all)/2);
 for i=1:2:numel(max_all)
-    temp_idx_range=max_all(i)-3:max_all(i+1)+3;
+    temp_idx_range=max(1,max_all(i)-3):min(max_all(i+1)+3,numel(diff_hist));
     [max_val((i+1)/2),max_idx]=max(diff_hist(temp_idx_range));
     max_val_idx((i+1)/2)=temp_idx_range(max_idx);
 end
@@ -77,7 +88,6 @@ for i=1:window_size:numel(hist_old)-window_size
     min_window=min(hist_old(i:i+window_size-1));
     max_window=max(hist_old(i:i+window_size-1));
     hist_new(i:i+window_size-1)=max_window-min_window;
-    
 end
 
 min_window=min(hist_old(i:end));
