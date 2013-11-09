@@ -1,5 +1,3 @@
-ccc
-
 load('diff.mat');
 diff_hist=diff;
 clearvars diff;
