@@ -32,25 +32,16 @@ for iFrame = 1 : numFrames - 1
 end
 
 
-for iFrame = 1 : 
-    
-    
-% write data to file
-for i
-    outFilename = fullfile (outTemplate, int2str(iFrame)+'.avi');
-    writerObj = VideoWriter (filename, 'MPEG-4');
-    writeVideo(writerObj,images);
+
+gaussSigma = 100; % frames
 
 
-% gaussSigma = 100; % frames
-% 
-% 
-% size = gaussSigma * 2 + 1;
-% x = linspace(-size / 2, size / 2, size);
-% gaussFilter = exp(-x .^ 2 / (2 * gaussSigma ^ 2));
-% gaussFilter = gaussFilter / sum (gaussFilter); % normalize
-% 
-% yfilt = conv (diff, gaussFilter, 'same');
-% plot (diff ./ yfilt);
+size = gaussSigma * 2 + 1;
+x = linspace(-size / 2, size / 2, size);
+gaussFilter = exp(-x .^ 2 / (2 * gaussSigma ^ 2));
+gaussFilter = gaussFilter / sum (gaussFilter); % normalize
+
+yfilt = conv (diff, gaussFilter, 'same');
+plot (diff ./ yfilt);
 
 
