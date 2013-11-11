@@ -1,4 +1,6 @@
-%% RUNGETPEAKS
+cutIntoShots (inDirPath, histDiffName, inVideoName, ...
+              outDirPath, histPeaksName, shotsNamePrefix, ffmpeg_path)
+%% CUTINTOSHOTS
 %
 % This script loads the hist_diff file in format [frame_id diff] x NRows
 % It then runs getPeaks function and saves the peak results
@@ -12,26 +14,30 @@
 
 %% constants
 
-ffmpeg_path = '/usr/local/bin/ffmpeg';
 Container = 'mp4';
+
+%cutMethod =  ' -vcodec copy -acodec copy';
+cutMethod =  ' -c:v libx264 -strict -2';
+
+fps = 25;
 
 
 %% input
 
-fps = 25;
-%cutMethod =  ' -vcodec copy -acodec copy';
-cutMethod =  ' -c:v libx264 -strict -2';
+if nargin == 0
+    return
+    ffmpeg_path = '/usr/local/bin/ffmpeg';
 
-% in
-inDirPath = 'videoData/videoSrc/LIV-MUtd-EPL13';
-histDiffName = 'LIV-MUtd-EPL13-2-hist_diff.txt';
-inVideoName = 'LIV-MUtd-EPL13-2.mkv';
+    % in
+    inDirPath = '/Volumes/WinHome/LBMV-project/videoData/src/Arsenal_Tottenham_1_September_2013/';
+    histDiffName = 'Ars-Tot-2-hist_diff.txt';
+    inVideoName = 'Ars-Tot-2.mkv';
 
-% out
-histPeaksName = 'LIV-MUtd-EPL13-2-hist_peaks.txt';
-outDirPath = 'videoData/videoSrc/LIV-MUtd-EPL13/shots';
-shotsNamePrefix = 'LIV-MUtd-EPL13-2-';
-
+    % out
+    histPeaksName = 'Ars-Tot-2-hist_peaks.txt';
+    outDirPath = '/Volumes/WinHome/LBMV-project/videoData/shots';
+    shotsNamePrefix = 'Ars-Tot-2-';
+end
 
 %% getting frames of shot change
 
@@ -44,7 +50,10 @@ histDiff = histDiffArray (2:end,2)';
 % add the zero frame
 peakFrames = [0 peakFrames];
 
-% write file with shot change data
+
+
+%% write file with shot change data
+
 fid=fopen (fullfile(inDirPath, histPeaksName),'wt');
 for i = 1 : length(peakFrames)
     value = peakFrames(i);
@@ -52,8 +61,6 @@ for i = 1 : length(peakFrames)
     fprintf (fid, '%s\n', datestr(value/24/3600/fps, 'HH:MM:SS.FFF'));
 end
 fclose(fid);
-
-%dlmwrite (fullfile(DirPath, HistPeaksName), peakFrames');
 
 
 
