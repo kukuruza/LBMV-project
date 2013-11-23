@@ -1,5 +1,5 @@
-cutIntoShots (inDirPath, histDiffName, inVideoName, ...
-              outDirPath, histPeaksName, shotsNamePrefix, ffmpeg_path)
+function [] = cutIntoShots (inDirPath, histDiffName, inVideoName, ...
+                    outDirPath, histPeaksName, shotsNamePrefix, ffmpeg_path)
 %% CUTINTOSHOTS
 %
 % This script loads the hist_diff file in format [frame_id diff] x NRows
@@ -25,18 +25,17 @@ fps = 25;
 %% input
 
 if nargin == 0
-    return
     ffmpeg_path = '/usr/local/bin/ffmpeg';
 
     % in
-    inDirPath = '/Volumes/WinHome/LBMV-project/videoData/src/Arsenal_Tottenham_1_September_2013/';
-    histDiffName = 'Ars-Tot-2-hist_diff.txt';
-    inVideoName = 'Ars-Tot-2.mkv';
+    inDirPath = '/Volumes/Data/videoData/src/LIV-MUtd-EPL13/';
+    histDiffName = 'LIV-MUtd-EPL13-1-hist_diff.txt';
+    inVideoName = 'LIV-MUtd-EPL13-sm-1.mkv';
 
     % out
-    histPeaksName = 'Ars-Tot-2-hist_peaks.txt';
-    outDirPath = '/Volumes/WinHome/LBMV-project/videoData/shots';
-    shotsNamePrefix = 'Ars-Tot-2-';
+    histPeaksName = 'LIV-MUtd-EPL13-sm-1-hist_peaks.txt';
+    outDirPath = '/Volumes/Data/videoData/src/LIV-MUtd-EPL13/shots';
+    shotsNamePrefix = 'LIV-MUtd-EPL13-1-';
 end
 
 %% getting frames of shot change
