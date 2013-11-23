@@ -1,5 +1,5 @@
 function [] = cutIntoShots (inDirPath, histDiffName, inVideoName, ...
-                    outDirPath, histPeaksName, shotsNamePrefix, ffmpeg_path)
+                             outDirPath, histPeaksName, shotsNamePrefix, ffmpeg_path)
 %% CUTINTOSHOTS
 %
 % This script loads the hist_diff file in format [frame_id diff] x NRows
