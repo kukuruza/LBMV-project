@@ -1,4 +1,4 @@
-ccc
+clear all; close all; clc;
 
 in_dir='E:\learning_project\shots\';
 out_dir=fullfile('..','..','fullVideoAudio_mat');
