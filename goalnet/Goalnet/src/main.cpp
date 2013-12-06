@@ -42,7 +42,7 @@ int main(int argc, const char * argv[])
 
     float metrics;
     Mat output;
-    bool detected = detectNetInImage (image, thresh, &metrics, &output);
+    bool detected = detectNetInImage (image, thresh, false, &metrics, &output);
     
     cout << "metrics " << metrics << " vs threshold " << thresh << endl;
     if (detected)

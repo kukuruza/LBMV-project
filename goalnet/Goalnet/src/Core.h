@@ -16,7 +16,7 @@
 
 cv::Mat getBimodalKernel (const cv::Mat& srcKernel, const int dist, const bool doFlip);
 
-bool    detectNetInImage (const cv::Mat& image, const float thresh,
+bool    detectNetInImage (const cv::Mat& image, const float thresh, bool transp,
                           float* metricsOutput = NULL, cv::Mat* matOutput = NULL);
 
 

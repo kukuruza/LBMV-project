@@ -3,6 +3,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <boost/filesystem.hpp>
 #include <fstream>
+#include <set>
 
 #include "mediaLoadSave.h"
 #include "Core.h"
@@ -20,9 +21,11 @@ int main(int argc, const char * argv[])
     CmdLine cmd ("detect goalnet from a video", ' ', "0", false);
     typedef ValueArg<string> ArgStr;
     ValueArg<string> cmdInput ("i", "input", "input video", true, "", "string", cmd);
-    ValueArg<string> cmdOutput ("o", "output", "path of txt with detections", false, "/dev/null", "string", cmd);
+    ValueArg<string> cmdSharpness ("", "sharpness", "path of txt with sharpness", false, "/dev/null", "string", cmd);
+    ValueArg<string> cmdRespPath ("r", "responses", "path of txt with responses", false, "/dev/null", "string", cmd);
+    
     ValueArg<float> cmdThresh ("t", "threshold", "method threshold", false, 0.2f, "float", cmd);
-    ValueArg<int> cmdPeriod ("p", "period", "every N-th net is processed", false, 25, "int", cmd);
+    ValueArg<int> cmdPeriod ("p", "period", "every N-th frame is processed", false, 25, "int", cmd);
     ValueArg<int> cmdChannel ("c", "channel", "0-1-2 stand for B-G-R", false, 2, "int", cmd);
     ValueArg<float> cmdSigma ("s", "sigma", "smoothing sigma", false, 1, "float", cmd);
     
@@ -30,61 +33,104 @@ int main(int argc, const char * argv[])
     // parse user input
     cmd.parse(argc, argv);
     string videoInPath = cmdInput.getValue();
-    string txtOutPath = cmdOutput.getValue();
+    string txtSharpnessPath = cmdSharpness.getValue();
+    string txtRespPath = cmdRespPath.getValue();
     float thresh = cmdThresh.getValue();
     int period = cmdPeriod.getValue();
     int channel = cmdChannel.getValue();
     assert (channel >= 0 && channel < 3);
-    float sigma = cmdSigma.getValue();
     
-    
-    ofstream ofs (txtOutPath.c_str());
-    if (!ofs)
-    {
-        cout << "Couldn't open " << txtOutPath << endl;
-        return -1;
-    }
     
     cv::VideoCapture video = evg::openVideo  (videoInPath);
     
+    /*
     // detect frames
-    vector<float> detectedFrames;
+    vector<int> sharpnessVec;
     for (int i = 0; ; ++i)
     {
         Mat image;
-        if ( !video.read(image) ) return 0;
-        
-        if (i % period == 0)
+        if ( !video.read(image) )
         {
-            Mat imChannels[3];
-            split(image, imChannels);
-            image = imChannels[channel];
-
-            //imshow("Red", image);
-            //waitKey(-1);
-            
-            image.convertTo(image, CV_32F);
-
-            float metrics;
-            Mat output;
-            detectedFrames[i/period] = float(detectNetInImage (image, thresh, &metrics, &output));
-            
-            ofs << metrics << " " << (detectedFrames[i/period] ? "1" : "0") << endl;
+            cout << "break at i = " << i << endl;
+            break;
         }
+        
+        cvtColor(image, image, CV_BGR2GRAY);
+        
+        Matx33f laplaceKernel = Matx33f(0,-1,0, -1,4,-1, 0,-1,0);
+        Mat laplacedImage;
+        filter2D(image, laplacedImage, -1, laplaceKernel);
+        int sharp = int(sum(abs(laplacedImage))[0] * 0.001);
+        
+        sharpnessVec.push_back(sharp);
+        ostringstream oss;
+        oss << sharp;
+    }
+    Mat sharpness = Mat(sharpnessVec);
+    evg::dlmwrite(txtOutPath, sharpness);
+    
+    */
+    
+    Mat sharpness = evg::dlmread(txtSharpnessPath);
+    
+    set<int> indices;
+    const int slidingwindowSize = 24;
+    for (int i = 0; i < sharpness.rows - 1.5 * slidingwindowSize; i += slidingwindowSize / 2)
+    {
+        Mat window = sharpness(Range(i, i+slidingwindowSize), Range(0,1));
+        Point iMax;
+        double dummy1, dummy2;
+        minMaxLoc (window, &dummy1, &dummy2, &iMax);
+        cout << iMax.y << " " << i + iMax.y << endl;
+        indices.insert(i + iMax.y);
     }
     
-    // get high density of detected regions
-    Mat smoothedDetected = Mat(Mat(detectedFrames).size(), CV_32F);
-    int kernelSize = int(sigma * 4);
-    cv::GaussianBlur (Mat(detectedFrames), smoothedDetected, Size(kernelSize, kernelSize), sigma);
+    cout << "finished with processing peaks, set size: " << indices.size() << endl;
     
-    // linear sum of detected
-    Range rangeOfFiltered = Range (int(kernelSize/2), smoothedDetected.rows - int(kernelSize/2));
-    float detectedSum = sum(smoothedDetected(rangeOfFiltered, Range(0,1)))[0];
+    Mat responses = Mat(0,3,CV_32F);
+    video = evg::openVideo (videoInPath);
+    for (int i = 0; ; ++i)
+    {
+        Mat image;
+        if ( !video.read(image) )
+        {
+            cout << "break at i = " << i << endl;
+            break;
+        }
+        
+        if (find(indices.begin(), indices.end(), i) == indices.end())
+            continue;
+        
+        
+        cvtColor(image, image, CV_BGR2GRAY);
+        
+        ostringstream oss;
+        oss << sharpness.at<int>(i);
+        
+        //putText(image, oss.str(), cv::Point(1,40), CV_FONT_HERSHEY_SIMPLEX, 1, Scalar(255));
+        //imshow("frame", image);
+        //waitKey(-1);
+        
+        
+        Matx13f response;
+
+        Mat image32f;
+        image.convertTo(image32f, CV_32F);
+
+        Mat output;
+        detectNetInImage (image32f, thresh, false, &response(1), &output);
+        detectNetInImage (image32f, thresh, true,  &response(2), &output);
+
+        response(0) = i;
+        responses.push_back(Mat(response));
+
+        cout << response(1) * response(2) << endl;
+        
+    }
+
     
-    // normalize to [0 1]
-    const float CoefUp = 0.3;
-    double result = atan(CoefUp * detectedSum) / CV_PI * 2;
+    cout << responses.rows << " " << responses.cols << endl;
+    evg::dlmwrite(txtRespPath, responses);
     
     
     return 0;

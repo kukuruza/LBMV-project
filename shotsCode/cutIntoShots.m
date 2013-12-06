@@ -1,5 +1,5 @@
-function [] = cutIntoShots (inDirPath, histDiffName, inVideoName, ...
-                             outDirPath, histPeaksName, shotsNamePrefix, ffmpeg_path)
+function outShotName = cutIntoShots (inDirPath, histDiffName, inVideoPath, ...
+                            outDirPath, histPeaksName, shotsNamePrefix, ffmpeg_path, fps)
 %% CUTINTOSHOTS
 %
 % This script loads the hist_diff file in format [frame_id diff] x NRows
@@ -19,23 +19,27 @@ Container = 'mp4';
 %cutMethod =  ' -vcodec copy -acodec copy';
 cutMethod =  ' -c:v libx264 -strict -2';
 
-fps = 25;
 
 
 %% input
 
-if nargin == 0
+if nargin == 1
     ffmpeg_path = '/usr/local/bin/ffmpeg';
 
+    fps = 25;
+
     % in
-    inDirPath = '/Volumes/Data/videoData/src/LIV-MUtd-EPL13/';
-    histDiffName = 'LIV-MUtd-EPL13-1-hist_diff.txt';
-    inVideoName = 'LIV-MUtd-EPL13-sm-1.mkv';
+    %inName = 'SwanseaCity-ManchesterUtd-17.08.13-w160-fps25';
+    inDirPath = strcat('/Volumes/WinHome/LBMV-project/videoData/Maheen/', ...
+                       'Arsenal-Sunderland-2013.09.14/');
+    histDiffName = 'hist_diff.txt';
+    %inVideoName = strcat(inName, '.mkv');
+    %inVideoPath = fullfile(inDirPath, inVideoName);
 
     % out
-    histPeaksName = 'LIV-MUtd-EPL13-sm-1-hist_peaks.txt';
-    outDirPath = '/Volumes/Data/videoData/src/LIV-MUtd-EPL13/shots';
-    shotsNamePrefix = 'LIV-MUtd-EPL13-1-';
+    histPeaksName = 'hist_peaks.txt';
+    %outDirPath = fullfile(inDirPath, 'shots-w160-fps25');
+    %shotsNamePrefix = strcat(inName, '-');
 end
 
 %% getting frames of shot change
@@ -62,7 +66,6 @@ end
 fclose(fid);
 
 
-
 %% cutting video
 
 % use ffmpeg to cut shots
@@ -81,7 +84,7 @@ for i = 2 : length(peakFrames)
     command = strcat (ffmpeg_path, ...
                       ' -ss', {' '}, from_str, ...
                       ' -t', {' '}, duration_str, ...
-                      ' -i', {' '}, fullfile(inDirPath, inVideoName), ...
+                      ' -i', {' '}, inVideoPath, ...
                       ' -f', {' '}, Container, ...
                       ' -y', {' '}, ...
                       cutMethod, {' '}, ...

@@ -1,6 +1,7 @@
 # ignore all the videos, etc.
 videoData
 data
+spatioTemporalBoW
 
 # temporary from gedit
 ##################
