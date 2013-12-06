@@ -1,12 +1,14 @@
-filename = 'videoData/videoFragments/Liverpool_Man_Utd_1_September_2013-1st-10-sm.mp4';
+function [] = getHistDiff (videoFile, outTxtFile, video)
 
-outTemplate = 'videoData/videoShots/Liverpool_Man_Utd_1_September_2013-1st-10/';
-
-%obj = VideoReader(filename);
-%video = read(obj);
+if nargin <= 3
+   obj = VideoReader(videoFile);
+   video = read(obj);
+end
 
 numFrames = size(video, 4);
 numBinsChannel = 25;
+
+diffs = zeros(numFrames - 1, 1);
 
 I2 = video(:,:,:,1);
 for iFrame = 1 : numFrames - 1
@@ -24,24 +26,11 @@ for iFrame = 1 : numFrames - 1
     h2blue  = imhist(I2(:,:,3), numBinsChannel);
     h2 = [h2red; h2green; h2blue];
 
-    diff(iFrame) = sum(abs(h1 - h2)) / 2 / size(I1,1) / size(I1,2);
+    diffs(iFrame) = sum(abs(h1 - h2)) / 2 / size(I1,1) / size(I1,2);
     if (mod(iFrame, 100) == 0)
         fprintf('frame %d \n', iFrame);
     end
     
 end
 
-
-
-gaussSigma = 100; % frames
-
-
-size = gaussSigma * 2 + 1;
-x = linspace(-size / 2, size / 2, size);
-gaussFilter = exp(-x .^ 2 / (2 * gaussSigma ^ 2));
-gaussFilter = gaussFilter / sum (gaussFilter); % normalize
-
-yfilt = conv (diff, gaussFilter, 'same');
-plot (diff ./ yfilt);
-
-
+dlmwrite (outTxtFile, [[1:length(diffs)]', diffs], ' ');

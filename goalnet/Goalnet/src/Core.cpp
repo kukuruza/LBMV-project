@@ -37,7 +37,7 @@ cv::Mat getBimodalKernel (const cv::Mat& srcKernel, const int dist, const bool d
 }
 
 
-bool detectNetInImage (const Mat& image, const float thresh,
+bool detectNetInImage (const Mat& image, const float thresh, bool transp,
                        float* metricsOutput, Mat* matOutput)
 {
     const int kernelWidth = 5;
@@ -57,7 +57,9 @@ bool detectNetInImage (const Mat& image, const float thresh,
         bimodalKernel = Mat::ones(kernelWidth,1,CV_32F) * bimodalKernel;
         
         Mat output;
-        filter2D(image, output, -1, bimodalKernel.t());
+        if (transp)
+            bimodalKernel = bimodalKernel.t();
+        filter2D(image, output, -1, bimodalKernel);
         responses[dist - firstDist] = sum(sum(abs(output)))[0] / output.rows / output.cols;
     }
     

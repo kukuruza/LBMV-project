@@ -24,7 +24,7 @@ I = I(:,:,Channel);
 
 clear resp;
 
-edgeSize = sigm * 3;
+edgeSize = sigm * 5;
 for dist = 1 : NumDists
 
   % use 3rd party funtion
@@ -33,6 +33,8 @@ for dist = 1 : NumDists
 
   kernel2D = cellKernel * ones(1,5);
   kernel2D = kernel2D'; % default kernel will be horizontal
+  plot(cellKernel)
+  waitforbuttonpress;
 
   resp(dist) = sum(sum(abs(conv2(double(I), kernel2D')))) / size(I,1) / size(I,2);
 
@@ -40,12 +42,12 @@ end
 
 % EITHER
 % remove the straight line using moving average
-movingAvgFilter = repmat(1/FirstDist/2, FirstDist*2, 1);
-signal = resp(FirstDist : end-FirstDist) - conv(resp, movingAvgFilter, 'valid');
+%movingAvgFilter = repmat(1/FirstDist/2, FirstDist*2, 1);
+%signal = resp(FirstDist : end-FirstDist) - conv(resp, movingAvgFilter, 'valid');
 
 % OR
-%signal = resp(FirstDist:end);
-%signal = signal - [1:length(signal)] / length(signal) * (signal(end) - signal(1));
+signal = resp(FirstDist:end);
+signal = signal - [1:length(signal)] / length(signal) * (signal(end) - signal(1));
 
 spectrum = abs(real(fft(signal)));
 % remove the second half of the spectrum

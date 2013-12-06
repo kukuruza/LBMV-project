@@ -51,7 +51,7 @@ do
 
     output_path=${output_template/"*"/$time}
 
-    ffmpeg -ss $time_format:00 -t 00:00:$duration -i $file_path -vcodec copy -acodec copy $output_path
+    ffmpeg -i $file_path -ss $time_format:00 -t 00:00:$duration -vf scale=640:-1 -vcodec copy -acodec copy $output_path
 
     ffmpeg_return=$?
     time=$(($time + $time_gap))

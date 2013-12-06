@@ -37,11 +37,20 @@ Mat getHistFromFrame (Mat frame, int binsPerCh)
       Mat g_hist = hist(cv::Range(binsPerCh, binsPerCh * 2), cv::Range(0, 1));
       Mat r_hist = hist(cv::Range(binsPerCh * 2, binsPerCh * 3), cv::Range(0, 1));
 
+      cout << b_hist.rows << " " << b_hist.cols << endl;
+      cout << r_hist.rows << " " << r_hist.cols << endl;
+      cout << g_hist.rows << " " << g_hist.cols << endl;
+      cout << &binsPerCh << " " << histRange;
+      cout << "Here" << endl;
+    
+
       /// Compute the histograms:
       calcHist( &bgr_planes[0], 1, 0, Mat(), b_hist, 1, &binsPerCh, &histRange, uniform, accumulate );
       calcHist( &bgr_planes[1], 1, 0, Mat(), g_hist, 1, &binsPerCh, &histRange, uniform, accumulate );
       calcHist( &bgr_planes[2], 1, 0, Mat(), r_hist, 1, &binsPerCh, &histRange, uniform, accumulate );
       
+      cout << "here" << endl;
+    
       /*
       // Draw the histograms for B, G and R
       int hist_w = 512; int hist_h = 400;
