@@ -41,8 +41,10 @@ bool detectNetInImage (const Mat& image, const float thresh, bool transp,
                        float* metricsOutput, Mat* matOutput)
 {
     const int kernelWidth = 5;
-    const int maxDist = 100;
     const int firstDist = 10;
+    const int maxDist = 128 + firstDist;
+    
+    const int MinPeakFreq = 5;
 
     // get gaussian kernel
     float gradKernleArr[] = { 0.0133f, 0.1080f, 0.2420f, 0, -0.2420f, -0.1080f, -0.0133f };
@@ -67,22 +69,36 @@ bool detectNetInImage (const Mat& image, const float thresh, bool transp,
     double diff = (responses[responses.size()-1] - responses[0]) / responses.size();
     for (int i = 0; i != responses.size(); ++i)
         responses[i] -= i * diff;
+    Mat matResponses = Mat(responses);
+    matResponses -= mean(matResponses)[0];
+    
+    //for (int i = 0; i != responses.size(); ++i)
+    //    cout << matResponses.at<float>(i,0) << endl;
+    
+    //cout << "rows: " << matResponses.rows << " x cols: " << matResponses.cols << endl;
     
     // get fft
-    Mat respMat = Mat(responses);
-    Mat fftCompl = Mat::zeros(respMat.size(), CV_32FC2), fft;
-    cv::dft (respMat, fftCompl, DFT_COMPLEX_OUTPUT);
+    Mat fftCompl = Mat::zeros(matResponses.size(), CV_32FC2);
+    cv::dft (matResponses, fftCompl, DFT_COMPLEX_OUTPUT);
+    
+    //cout << fftCompl << endl;
     
     // get real part
     Mat fftChannels[2];
     split( fftCompl, fftChannels );
-    fft = fftChannels[0];
+    Mat fft = fftChannels[0];
     fft = abs(fft);
     
     // remove the second half, as well as the 0th and 1st harmonics
     int indHalf = int(fft.rows / 2);
     assert (indHalf > 2);
-    Mat fftCrop = fft(Range(2, indHalf), Range(0,1));
+    fft.at<float>(0,0) = 0;
+    fft.at<float>(1,0) = 0;
+    Mat fftCrop = fft(Range(0, indHalf), Range(0,1));
+    
+    //for (int i = 0; i != fftCrop.rows; ++i)
+    //    cout << fftChannels[0].at<float>(i,0) << endl;
+    
     
     
     // now the magic starts. Maybe more magic is necessary
@@ -90,7 +106,8 @@ bool detectNetInImage (const Mat& image, const float thresh, bool transp,
     // get the max
     double maxVal = -1;
     int maxInd = -1;
-    minMaxIdx (fftCrop, NULL, &maxVal, NULL, &maxInd);
+    Mat fftPeakArea = fftCrop(Range(MinPeakFreq, fftCrop.rows), Range(0,1));
+    minMaxIdx (fftPeakArea, NULL, &maxVal, NULL, &maxInd);
     assert (maxInd >= 0);
     
     // get the mean without the peak +- 30%
@@ -104,7 +121,7 @@ bool detectNetInImage (const Mat& image, const float thresh, bool transp,
     if (matOutput != NULL)
     {
         *matOutput = Mat(fft.rows, 2, CV_32F);
-        respMat.copyTo((*matOutput)(Range(0,fft.rows), Range(0,1)));
+        matResponses.copyTo((*matOutput)(Range(0,fft.rows), Range(0,1)));
         fft.copyTo((*matOutput)(Range(0,fft.rows), Range(1,2)));
     }
 
@@ -112,8 +129,10 @@ bool detectNetInImage (const Mat& image, const float thresh, bool transp,
     float metrics = meanWithoutPeak / maxVal;
     if (metricsOutput != NULL) *metricsOutput = metrics;
     if (metrics < thresh)
-        //float period = respMat.rows / (maxInd+2);
+    {
+        cout << "period: " << matResponses.rows / (maxInd+MinPeakFreq) << endl;
         return 1;
+    }
     else
         return 0;
 }
