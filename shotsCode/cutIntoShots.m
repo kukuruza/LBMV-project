@@ -1,5 +1,6 @@
 function outShotName = cutIntoShots (inDirPath, histDiffName, inVideoPath, ...
-                            outDirPath, histPeaksName, shotsNamePrefix, ffmpeg_path, fps)
+                                     outDirPath, histPeaksName, shotsNamePrefix, ...
+                                     ffmpeg_path, fps)
 %% CUTINTOSHOTS
 %
 % This script loads the hist_diff file in format [frame_id diff] x NRows
@@ -14,7 +15,7 @@ function outShotName = cutIntoShots (inDirPath, histDiffName, inVideoPath, ...
 
 %% constants
 
-Container = 'mp4';
+Container = 'avi';
 
 %cutMethod =  ' -vcodec copy -acodec copy';
 cutMethod =  ' -c:v libx264 -strict -2';
