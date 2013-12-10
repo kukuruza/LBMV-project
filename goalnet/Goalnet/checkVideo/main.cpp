@@ -6,7 +6,6 @@
 #include <set>
 
 #include "mediaLoadSave.h"
-#include "Core.h"
 
 using namespace std;
 using namespace cv;
