@@ -38,7 +38,7 @@ cv::Mat getBimodalKernel (const cv::Mat& srcKernel, const int dist, const bool d
 
 
 bool detectNetInImage (const Mat& image, const float thresh, bool transp,
-                       float* metricsOutput, Mat* matOutput)
+                       int* period, float* metricsOutput, Mat* matOutput)
 {
     const int kernelWidth = 5;
     const int firstDist = 10;
@@ -125,14 +125,17 @@ bool detectNetInImage (const Mat& image, const float thresh, bool transp,
         fft.copyTo((*matOutput)(Range(0,fft.rows), Range(1,2)));
     }
 
+
+    if (period == NULL)
+        cout << "period: " << matResponses.rows / (maxInd+MinPeakFreq) << endl;
+    else
+        *period = matResponses.rows / (maxInd+MinPeakFreq);
+
     // get the decision
     float metrics = meanWithoutPeak / maxVal;
     if (metricsOutput != NULL) *metricsOutput = metrics;
     if (metrics < thresh)
-    {
-        cout << "period: " << matResponses.rows / (maxInd+MinPeakFreq) << endl;
         return 1;
-    }
     else
         return 0;
 }

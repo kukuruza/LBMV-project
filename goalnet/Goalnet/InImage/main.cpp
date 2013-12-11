@@ -38,15 +38,19 @@ int main(int argc, const char * argv[])
     //waitKey(-1);
     //return 0;
     
-    image.convertTo(image, CV_32F);
+    Mat image32f;
+    image.convertTo(image32f, CV_32F);
 
-    float metrics;
     Mat output;
-    bool detected = detectNetInImage (image, thresh, false, &metrics, &output);
-    
-    cout << "metrics " << metrics << " vs threshold " << thresh << endl;
-    if (detected)
-        cout << "detected peak" << endl;
+    float response1, response2;
+    int period1 = 0, period2 = 0;
+
+    detectNetInImage (image32f, thresh, false, &period1, &response1, &output);
+    detectNetInImage (image32f, thresh, true,  &period2, &response2, &output);
+
+    const float NormPeriodDiff = 2;
+
+    cout << 1/response1 << " " << 1/response2 << endl;
 
     // printout
     evg::dlmwrite (txtOutPath, output);

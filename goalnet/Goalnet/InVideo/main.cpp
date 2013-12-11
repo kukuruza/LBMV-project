@@ -21,14 +21,10 @@ int main(int argc, const char * argv[])
     CmdLine cmd ("detect goalnet from a video", ' ', "0", false);
     typedef ValueArg<string> ArgStr;
     ValueArg<string> cmdInput ("i", "input", "input video", true, "", "string", cmd);
-    ValueArg<string> cmdSharpness ("", "sharpness", "path of txt with sharpness", false, "/dev/null", "string", cmd);
+    ValueArg<string> cmdSharpness ("", "sharpness", "path of txt with sharpness", true, "/dev/null", "string", cmd);
     ValueArg<string> cmdRespPath ("r", "responses", "path of txt with responses", false, "/dev/null", "string", cmd);
-    
-    ValueArg<float> cmdThresh ("t", "threshold", "method threshold", false, 0.2f, "float", cmd);
-    ValueArg<int> cmdPeriod ("p", "period", "every N-th frame is processed", false, 25, "int", cmd);
-    ValueArg<int> cmdChannel ("c", "channel", "0-1-2 stand for B-G-R", false, 2, "int", cmd);
-    ValueArg<float> cmdSigma ("s", "sigma", "smoothing sigma", false, 1, "float", cmd);
-    
+    SwitchArg cmdNotShowVideo ("", "dark", "do not show video", cmd);
+
     
     // parse user input
     cmd.parse(argc, argv);
@@ -36,42 +32,17 @@ int main(int argc, const char * argv[])
     string txtSharpnessPath = cmdSharpness.getValue();
     string txtRespPath = cmdRespPath.getValue();
     float thresh = cmdThresh.getValue();
-    int period = cmdPeriod.getValue();
-    int channel = cmdChannel.getValue();
-    assert (channel >= 0 && channel < 3);
+    bool notShowVideo = cmdNotShowVideo.getValue();
     
-    
-    cv::VideoCapture video = evg::openVideo  (videoInPath);
-    
-    /*
-    // detect frames
-    vector<int> sharpnessVec;
-    for (int i = 0; ; ++i)
-    {
-        Mat image;
-        if ( !video.read(image) )
-        {
-            cout << "break at i = " << i << endl;
-            break;
-        }
-        
-        cvtColor(image, image, CV_BGR2GRAY);
-        
-        Matx33f laplaceKernel = Matx33f(0,-1,0, -1,4,-1, 0,-1,0);
-        Mat laplacedImage;
-        filter2D(image, laplacedImage, -1, laplaceKernel);
-        int sharp = int(sum(abs(laplacedImage))[0] * 0.001);
-        
-        sharpnessVec.push_back(sharp);
-        ostringstream oss;
-        oss << sharp;
-    }
-    Mat sharpness = Mat(sharpnessVec);
-    evg::dlmwrite(txtOutPath, sharpness);
-    
-    */
-    
+    cv::VideoCapture video = evg::openVideo  (videoInPath);    
     Mat sharpness = evg::dlmread(txtSharpnessPath);
+    
+    ofstream ofs(txtRespPath.c_str());
+    if (!ofs)
+    {
+        cerr << "Connot open respnse file: " << txtRespPath << endl;
+        return -1;
+    }
     
     set<int> indices;
     const int slidingwindowSize = 24;
@@ -81,12 +52,16 @@ int main(int argc, const char * argv[])
         Point iMax;
         double dummy1, dummy2;
         minMaxLoc (window, &dummy1, &dummy2, &iMax);
-        cout << iMax.y << " " << i + iMax.y << endl;
+        //cout << iMax.y << " " << i + iMax.y << endl;
         indices.insert(i + iMax.y);
     }
     
-    cout << "finished with processing peaks, set size: " << indices.size() << endl;
+    cout << "finished with processing peaks" << endl;
+    cout << "number of frames to process: " << indices.size() << endl;
     
+    if (!notShowVideo)
+        namedWindow("frame");
+
     Mat responses = Mat(0,3,CV_32F);
     video = evg::openVideo (videoInPath);
     for (int i = 0; ; ++i)
@@ -101,7 +76,6 @@ int main(int argc, const char * argv[])
         if (find(indices.begin(), indices.end(), i) == indices.end())
             continue;
         
-        
         cvtColor(image, image, CV_BGR2GRAY);
         
         ostringstream oss;
@@ -111,28 +85,31 @@ int main(int argc, const char * argv[])
         //imshow("frame", image);
         //waitKey(-1);
         
-        
-        Matx13f response;
+        if (!notShowVideo)
+        {
+            imshow("frame", image);
+            waitKey(10);
+        }
 
         Mat image32f;
         image.convertTo(image32f, CV_32F);
 
         Mat output;
-        detectNetInImage (image32f, thresh, false, &response(1), &output);
-        detectNetInImage (image32f, thresh, true,  &response(2), &output);
+        float response1, response2;
+        int period1 = 0, period2 = 0;
 
-        response(0) = i;
-        responses.push_back(Mat(response));
+        detectNetInImage (image32f, thresh, false, &period1, &response1, &output);
+        detectNetInImage (image32f, thresh, true,  &period2, &response2, &output);
 
-        cout << response(1) * response(2) << endl;
+        const float NormPeriodDiff = 2;
+
+        float metrics = response1 * response2 / (NormPeriodDiff + abs(period1 -  period2)) * 1000;
+        cout << "frame: " << i << "/" << sharpness.rows << ", sec: " << int(i / 25) << " - " 
+             << 1/response1 << " " << 1/response2 << endl;
+        ofs << i << " " << 1/response1 << " " << 1/response2 << endl;
         
     }
 
-    
-    cout << responses.rows << " " << responses.cols << endl;
-    evg::dlmwrite(txtRespPath, responses);
-    
-    
     return 0;
 }
 
