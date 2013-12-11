@@ -20,7 +20,7 @@ MinPeakFreq = 5;
 
 
 
-I = imread ('/Users/evg/Desktop/CMU/course-LBMV/LBMV-project/goalnet/im00004.jpg');
+I = imread ('/Users/evg/Dropbox/difficultNet.png');
 
 I = I(:,:,Channel);
 
@@ -38,7 +38,7 @@ for dist = 1 : FirstDist + NumDists
   kernel2D = cellKernel * ones(1,5);
   kernel2D = kernel2D'; % default kernel will be horizontal
 
-  signal(dist) = sum(sum(abs(conv2(double(I), kernel2D)))) / size(I,1) / size(I,2);
+  signal(dist) = sum(sum(abs(conv2(double(I), kernel2D')))) / size(I,1) / size(I,2);
 
 end
 
@@ -60,9 +60,25 @@ spectrum(1:2) = 0;
 
 
 figure(1)
+hold off
 plot(signal)
 figure(2)
+hold off
 plot(spectrum)
+
+figure(1);
+fontSize = 15;
+title('function of response on distance between modes', 'FontSize',fontSize);
+xlabel('distance between modes, pixels', 'FontSize',fontSize);
+ylabel('sum(abs( convolution with bimodal kernel ))', 'FontSize',fontSize);
+%h_legend = legend(plotLegend, 'Location','EastOutside');
+
+figure(2);
+fontSize = 15;
+title('fft', 'FontSize',fontSize);
+xlabel('harmonics number', 'FontSize',fontSize);
+ylabel('fft', 'FontSize',fontSize);
+%h_legend = legend(plotLegend, 'Location','EastOutside');
 
 
 % get the highest
